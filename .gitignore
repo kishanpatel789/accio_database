@@ -2,3 +2,5 @@ notes.md
 *.swp
 venv/
 .python-version
+__pycache__
+data
