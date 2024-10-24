@@ -24,7 +24,31 @@ schemas = {
         ],
     },
     "character": None,
-    "movie": None,
+    "movie": {
+        "api_endpoint": "v1/movies",
+        "attributes": [
+            "slug",
+            "title",
+            "summary",
+            "release_date",
+            "running_time",
+            "budget",
+            "box_office",
+            "rating",
+            "trailer",
+            "poster",
+            "wiki",
+        ],
+        "array_attributes": [
+            "directors",
+            "screenwriters",
+            "producers",
+            "cinematographers",
+            "editors",
+            "distributors",
+            "music_composers",
+        ]
+    },
     "potion": {
         "api_endpoint": "v1/potions",
         "api_query": {"page[size]": 100},

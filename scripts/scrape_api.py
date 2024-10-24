@@ -9,45 +9,8 @@ import time
 # %%
 api_server = "https://api.potterdb.com"
 
-endpoints = [
-    "v1/books",
-    "v1/books/{id}/chapters",
-]
-
 CSV_DIR = Path(__file__).parents[1] / "data/csv"
 
-
-# %%
-# get data
-
-response = requests.get(f"{api_server}/v1/books")
-
-# %%
-if response.status_code == 200:
-    r_json = response.json()
-    data = r_json.get("data")
-
-# %%
-# look for next page
-next_page_url = r_json["links"].get("next")
-if next_page_url:
-    pass
-    # TODO: call endpoint again
-
-# %%
-# save as csv
-
-# %%
-with open(CSV_DIR / "book.csv", "wt", newline="") as f:
-    column_names = ["id"] + schemas["book"]
-    writer = csv.DictWriter(f, fieldnames=column_names, quoting=csv.QUOTE_ALL)
-
-    writer.writeheader()
-
-    for book in data:
-        writer.writerow(
-            dict(id=book["id"], **book["attributes"]),
-        )
 
 # %%
 ##### chapters #####
@@ -89,21 +52,6 @@ with open(CSV_DIR / "book.csv", "rt", newline="") as f:
 
 
 # %%
-
-response = requests.get(
-    f"{api_server}/"
-    + "v1/books/{id}/chapters".format(id="6751e7f7-a8b7-488b-bde7-8606822d2338")
-)
-
-# %%
-if response.status_code == 200:
-    r_json = response.json()
-    data = r_json.get("data")
-else:
-    print(f"Error occurred: {response.status_code}")
-
-
-# %%
 def generate_column_names(table_schema: dict):
     column_names = ["id"]
     if table_schema.get("id_ref") is not None:
@@ -131,32 +79,35 @@ def make_api_get_request(url, payload=None, max_retries=5):
     raise Exception("Maximum retry attempts reached. Try again in an hour.")
 
 
+def write_to_csv(response_json, table, table_schema, column_names):
+    # open csv file to append
+    with open(CSV_DIR / f"{table}.csv", "at", newline="") as f:
+        writer = csv.DictWriter(f, fieldnames=column_names, quoting=csv.QUOTE_ALL)
+
+        for record in response_json["data"]:
+            row = dict(id=record["id"])
+            if table_schema.get("id_ref") is not None:
+                row.update({table_schema["id_ref"] + "_id": ""})
+            row.update({k: record["attributes"][k] for k in table_schema["attributes"]})
+            writer.writerow(row)
+
+
 def call_and_write(table, table_schema, column_names, url=None):
     # create base url
     if url is None:
         url = f"{api_server}/{table_schema['api_endpoint']}"
     url_payload = table_schema.get("api_query")
 
-    # open csv file to append
-    with open(CSV_DIR / f"{table}.csv", "at", newline="") as f:
-        writer = csv.DictWriter(f, fieldnames=column_names, quoting=csv.QUOTE_ALL)
+    # call api as many times as needed
+    while url is not None:
+        r_json = make_api_get_request(url, url_payload)
 
-        # call api as many times as needed
-        while url is not None:
-            r_json = make_api_get_request(url, url_payload)
+        # write to csv file
+        write_to_csv(r_json, table, table_schema, column_names)
 
-            for record in r_json["data"]:
-                row = dict(id=record["id"])
-                if table_schema.get("id_ref") is not None:
-                    row.update({table_schema["id_ref"] + "_id": ""})
-                row.update(
-                    {k: record["attributes"][k] for k in table_schema["attributes"]}
-                )
-                writer.writerow(row)
-
-            # get ready for next page
-            url = r_json["links"].get("next")
-            url_payload = None
+        # get ready for next page
+        url = r_json["links"].get("next")
+        url_payload = None
 
 
 # %%
@@ -165,8 +116,8 @@ CONTROL = {
     "chapter": 1,
     "character": 0,
     "movie": 0,
-    "potion": 1,
-    "spell": 1,
+    "potion": 0,
+    "spell": 0,
 }
 tables_to_get = [k for k, v in CONTROL.items() if v == 1]
 
@@ -188,10 +139,22 @@ for table in tables_to_get:
     # identify final table columns
     column_names = generate_column_names(table_schema)
 
-    # open csv file to write
+    # initialize base csv file
     with open(CSV_DIR / f"{table}.csv", "wt", newline="") as f:
         writer = csv.DictWriter(f, fieldnames=column_names, quoting=csv.QUOTE_ALL)
         writer.writeheader()
+
+    # initialize sub-attribute csv files
+    if table_schema.get("array_attributes") is not None:
+        for array_attribute in table_schema["array_attributes"]:
+            with open(
+                CSV_DIR / f"{table}_{array_attribute}.csv", "wt", newline=""
+            ) as f:
+                sub_column_names = [f"{table}_id", array_attribute]
+                writer = csv.DictWriter(
+                    f, fieldnames=sub_column_names, quoting=csv.QUOTE_ALL
+                )
+                writer.writeheader()
 
     if table_schema.get("id_ref") is not None:
         with open(CSV_DIR / f"{table_schema['id_ref']}.csv", "rt", newline="") as f:
