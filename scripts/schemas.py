@@ -14,7 +14,7 @@ schemas = {
         ],
     },
     "chapter": {
-        "api_endpoint": "v1/books/{id}/chapters",
+        "api_endpoint": "v1/books/{rel_id}/chapters",
         "id_ref": "book",
         "attributes": [
             "slug",
