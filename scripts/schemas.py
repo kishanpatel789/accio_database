@@ -9,7 +9,6 @@ schemas = {
             "release_date",
             "dedication",
             "pages",
-            "order",
             "cover",
             "wiki",
         ],
