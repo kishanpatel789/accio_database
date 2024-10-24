@@ -13,45 +13,6 @@ CSV_DIR = Path(__file__).parents[1] / "data/csv"
 
 
 # %%
-##### chapters #####
-with open(CSV_DIR / "book.csv", "rt", newline="") as f:
-    reader_column_names = ["id"] + schemas["book"]
-    reader = csv.DictReader(f, fieldnames=reader_column_names)
-    _ = next(reader)  # read header
-
-    with open(CSV_DIR / "chapter.csv", "wt", newline="") as fc:
-        column_names = ["id", "book_id"] + schemas["chapter"]
-        writer = csv.DictWriter(fc, fieldnames=column_names, quoting=csv.QUOTE_ALL)
-
-        writer.writeheader()
-
-        for book in reader:
-            print(book["id"], book["slug"])
-
-            endpoint_url = f"{api_server}/v1/books/{book['id']}/chapters"
-
-            while endpoint_url:
-                response = requests.get(endpoint_url)
-
-                if response.status_code == 200:
-                    r_json = response.json()
-                    data = r_json.get("data")
-                    endpoint_url = r_json["links"].get("next")
-                else:
-                    print(f"Error occurred: {response.status_code}")
-                    raise
-
-                for chapter in data:
-                    writer.writerow(
-                        dict(
-                            id=chapter["id"],
-                            book_id=book["id"],
-                            **chapter["attributes"],
-                        ),
-                    )
-
-
-# %%
 def generate_column_names(table_schema: dict):
     column_names = ["id"]
     if table_schema.get("id_ref") is not None:
@@ -59,6 +20,12 @@ def generate_column_names(table_schema: dict):
     column_names.extend(table_schema["attributes"])
 
     return column_names
+
+
+def generate_sub_column_names(table: str, array_attribute: str):
+    sub_column_names = [f"{table}_id", array_attribute]
+
+    return sub_column_names
 
 
 def make_api_get_request(url, payload=None, max_retries=5):
@@ -85,11 +52,31 @@ def write_to_csv(response_json, table, table_schema, column_names):
         writer = csv.DictWriter(f, fieldnames=column_names, quoting=csv.QUOTE_ALL)
 
         for record in response_json["data"]:
+            # write base csv
             row = dict(id=record["id"])
             if table_schema.get("id_ref") is not None:
                 row.update({table_schema["id_ref"] + "_id": ""})
             row.update({k: record["attributes"][k] for k in table_schema["attributes"]})
             writer.writerow(row)
+
+            # write array attributes as sub csv
+            for array_attribute in table_schema.get('array_attributes'):
+                with open(
+                    CSV_DIR / f"{table}_{array_attribute}.csv", "at", newline=""
+                ) as f_sub:
+                    sub_column_names = generate_sub_column_names(table, array_attribute)
+                    sub_writer = csv.DictWriter(f_sub, fieldnames=sub_column_names, quoting=csv.QUOTE_ALL)
+
+                    for value in record["attributes"][array_attribute]:
+                        sub_row = {
+                            sub_column_names[0]: record["id"],
+                            sub_column_names[1]: value,
+                        }
+
+                        sub_writer.writerow(sub_row)
+
+                
+                
 
 
 def call_and_write(table, table_schema, column_names, url=None):
@@ -112,10 +99,10 @@ def call_and_write(table, table_schema, column_names, url=None):
 
 # %%
 CONTROL = {
-    "book": 1,
-    "chapter": 1,
+    "book": 0,
+    "chapter": 0,
     "character": 0,
-    "movie": 0,
+    "movie": 1,
     "potion": 0,
     "spell": 0,
 }
@@ -150,7 +137,7 @@ for table in tables_to_get:
             with open(
                 CSV_DIR / f"{table}_{array_attribute}.csv", "wt", newline=""
             ) as f:
-                sub_column_names = [f"{table}_id", array_attribute]
+                sub_column_names = generate_sub_column_names(table, array_attribute)
                 writer = csv.DictWriter(
                     f, fieldnames=sub_column_names, quoting=csv.QUOTE_ALL
                 )
@@ -174,25 +161,5 @@ for table in tables_to_get:
 
     else:
         call_and_write(table, table_schema, column_names)
-
-    # # call api as many times as needed
-    # while url is not None:
-    #     r_json = make_api_get_request(url, url_payload)
-
-    #     for record in r_json["data"]:
-    #         row = dict(id=record["id"])
-    #         if table_schema.get("id_ref") is not None:
-    #             row.update({table_schema["id_ref"] + "_id": ""})
-    #         row.update(
-    #             {k: record["attributes"][k] for k in table_schema["attributes"]}
-    #         )
-
-    #         writer.writerow(row)
-
-    #     # get ready for next page
-    #     url = r_json['links'].get('next')
-    #     url_payload = None
-
-# %%
 
 # %%
