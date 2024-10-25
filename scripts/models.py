@@ -1,0 +1,28 @@
+from sqlalchemy import Column, String, Boolean, Float, \
+Integer, DateTime, Table, ForeignKey, func, MetaData
+from sqlalchemy.orm import mapped_column, relationship, DeclarativeBase
+from datetime import datetime, UTC
+
+from sqlalchemy.sql import expression
+from sqlalchemy.ext.compiler import compiles
+from sqlalchemy.types import DateTime
+
+metadata_obj = MetaData(schema=None)
+
+class Base(DeclarativeBase):
+    metadata = metadata_obj
+
+class Book(Base):
+    __tablename__ = "book"
+    id = mapped_column(String, primary_key=True)
+
+    slug = mapped_column(String, unique=True, nullable=False)
+    title = mapped_column(String, unique=True, nullable=False)
+    summary = mapped_column(String)
+    author = mapped_column(String)
+    release_date = mapped_column(DateTime)
+    dedication = mapped_column(String)
+    pages = mapped_column(Integer)
+    cover = mapped_column(String)
+    wiki = mapped_column(String)
+
