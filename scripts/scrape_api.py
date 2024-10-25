@@ -5,6 +5,7 @@ from pathlib import Path
 import csv
 from schemas import schemas
 import time
+from collections import Counter
 
 # %%
 API_SERVER = "https://api.potterdb.com"
@@ -46,8 +47,11 @@ def make_api_get_request(url, payload=None, max_retries=5):
 
 
 def write_to_csv(response_json, table, table_schema, column_names):
+    record_counter = Counter()
+
     # open csv file to append
-    with open(CSV_DIR / f"{table}.csv", "at", newline="") as f:
+    csv_file_name = f"{table}.csv"
+    with open(CSV_DIR / csv_file_name, "at", newline="") as f:
         writer = csv.DictWriter(f, fieldnames=column_names, quoting=csv.QUOTE_ALL)
 
         for record in response_json["data"]:
@@ -55,18 +59,22 @@ def write_to_csv(response_json, table, table_schema, column_names):
             row = dict(id=record["id"])
             if table_schema.get("id_ref") is not None:
                 id_ref_key = table_schema["id_ref"] + "_id"
-                id_ref_value = record["relationships"][table_schema["id_ref"]]["data"]["id"]
+                id_ref_value = record["relationships"][table_schema["id_ref"]]["data"][
+                    "id"
+                ]
                 row.update({id_ref_key: id_ref_value})
             row.update({k: record["attributes"][k] for k in table_schema["attributes"]})
             writer.writerow(row)
+            record_counter[csv_file_name] += 1
 
             # write array attributes as sub csv
             if table_schema.get("array_attributes") is not None:
                 for array_attribute in table_schema["array_attributes"]:
-                    with open(
-                        CSV_DIR / f"{table}_{array_attribute}.csv", "at", newline=""
-                    ) as f_sub:
-                        sub_column_names = generate_sub_column_names(table, array_attribute)
+                    sub_csv_file_name = f"{table}_{array_attribute}.csv"
+                    with open(CSV_DIR / sub_csv_file_name, "at", newline="") as f_sub:
+                        sub_column_names = generate_sub_column_names(
+                            table, array_attribute
+                        )
                         sub_writer = csv.DictWriter(
                             f_sub, fieldnames=sub_column_names, quoting=csv.QUOTE_ALL
                         )
@@ -78,6 +86,11 @@ def write_to_csv(response_json, table, table_schema, column_names):
                             }
 
                             sub_writer.writerow(sub_row)
+                            record_counter[sub_csv_file_name] += 1
+
+        # output written record counts
+        for file_name, record_count in record_counter.items():
+            print(f"    Wrote {record_count:,} records to '{file_name}'")
 
 
 def call_and_write(table, table_schema, column_names, url=None):
@@ -101,22 +114,13 @@ def call_and_write(table, table_schema, column_names, url=None):
 # %%
 CONTROL = {
     "book": 0,
-    "chapter": 1,
-    "character": 0,
+    "chapter": 0,
+    "character": 1,
     "movie": 0,
     "potion": 0,
     "spell": 0,
 }
 tables_to_get = [k for k, v in CONTROL.items() if v == 1]
-
-# loop through schemas
-# if id_ref is present
-#   open ref csv file and loop through rows
-#   call api function for each row
-# else: call api function
-
-# create endpoint
-#
 
 
 # %%
@@ -153,7 +157,7 @@ for table in tables_to_get:
             _ = next(reader)  # read header
 
             for ref_row in reader:
-                print(ref_row["id"], ref_row["slug"])
+                print(f"Preparing for reference '{ref_row['slug']}'")
 
                 api_endpoint = table_schema["api_endpoint"].format(rel_id=ref_row["id"])
                 url = f"{API_SERVER}/{api_endpoint}"
