@@ -10,4 +10,7 @@ CONTROL = {
 }
 
 API_SERVER = "https://api.potterdb.com"
-CSV_DIR = Path(__file__).parents[1] / "data/csv"
+PROJECT_DIR = Path(__file__).parents[1].resolve()
+CSV_DIR = PROJECT_DIR / "data/csv"
+
+DB_PATH = PROJECT_DIR / "potter.db"

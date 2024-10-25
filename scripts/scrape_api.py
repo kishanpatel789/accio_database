@@ -6,7 +6,7 @@ import csv
 from schemas import schemas
 import time
 from collections import Counter
-from api_config import API_SERVER, CSV_DIR, CONTROL
+from config import API_SERVER, CSV_DIR, CONTROL
 
 
 # %%
