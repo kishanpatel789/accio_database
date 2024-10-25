@@ -6,10 +6,7 @@ import csv
 from schemas import schemas
 import time
 from collections import Counter
-
-# %%
-API_SERVER = "https://api.potterdb.com"
-CSV_DIR = Path(__file__).parents[1] / "data/csv"
+from api_config import API_SERVER, CSV_DIR, CONTROL
 
 
 # %%
@@ -112,18 +109,8 @@ def call_and_write(table, table_schema, column_names, url=None):
 
 
 # %%
-CONTROL = {
-    "book": 0,
-    "chapter": 0,
-    "character": 1,
-    "movie": 0,
-    "potion": 0,
-    "spell": 0,
-}
 tables_to_get = [k for k, v in CONTROL.items() if v == 1]
 
-
-# %%
 for table in tables_to_get:
     print(f"\n============= {table} =============")
     table_schema = schemas[table]
