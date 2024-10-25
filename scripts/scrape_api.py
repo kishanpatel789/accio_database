@@ -7,8 +7,7 @@ from schemas import schemas
 import time
 
 # %%
-api_server = "https://api.potterdb.com"
-
+API_SERVER = "https://api.potterdb.com"
 CSV_DIR = Path(__file__).parents[1] / "data/csv"
 
 
@@ -55,34 +54,36 @@ def write_to_csv(response_json, table, table_schema, column_names):
             # write base csv
             row = dict(id=record["id"])
             if table_schema.get("id_ref") is not None:
-                row.update({table_schema["id_ref"] + "_id": ""})
+                id_ref_key = table_schema["id_ref"] + "_id"
+                id_ref_value = record["relationships"][table_schema["id_ref"]]["data"]["id"]
+                row.update({id_ref_key: id_ref_value})
             row.update({k: record["attributes"][k] for k in table_schema["attributes"]})
             writer.writerow(row)
 
             # write array attributes as sub csv
-            for array_attribute in table_schema.get('array_attributes'):
-                with open(
-                    CSV_DIR / f"{table}_{array_attribute}.csv", "at", newline=""
-                ) as f_sub:
-                    sub_column_names = generate_sub_column_names(table, array_attribute)
-                    sub_writer = csv.DictWriter(f_sub, fieldnames=sub_column_names, quoting=csv.QUOTE_ALL)
+            if table_schema.get("array_attributes") is not None:
+                for array_attribute in table_schema["array_attributes"]:
+                    with open(
+                        CSV_DIR / f"{table}_{array_attribute}.csv", "at", newline=""
+                    ) as f_sub:
+                        sub_column_names = generate_sub_column_names(table, array_attribute)
+                        sub_writer = csv.DictWriter(
+                            f_sub, fieldnames=sub_column_names, quoting=csv.QUOTE_ALL
+                        )
 
-                    for value in record["attributes"][array_attribute]:
-                        sub_row = {
-                            sub_column_names[0]: record["id"],
-                            sub_column_names[1]: value,
-                        }
+                        for value in record["attributes"][array_attribute]:
+                            sub_row = {
+                                sub_column_names[0]: record["id"],
+                                sub_column_names[1]: value,
+                            }
 
-                        sub_writer.writerow(sub_row)
-
-                
-                
+                            sub_writer.writerow(sub_row)
 
 
 def call_and_write(table, table_schema, column_names, url=None):
     # create base url
     if url is None:
-        url = f"{api_server}/{table_schema['api_endpoint']}"
+        url = f"{API_SERVER}/{table_schema['api_endpoint']}"
     url_payload = table_schema.get("api_query")
 
     # call api as many times as needed
@@ -100,9 +101,9 @@ def call_and_write(table, table_schema, column_names, url=None):
 # %%
 CONTROL = {
     "book": 0,
-    "chapter": 0,
+    "chapter": 1,
     "character": 0,
-    "movie": 1,
+    "movie": 0,
     "potion": 0,
     "spell": 0,
 }
@@ -155,7 +156,7 @@ for table in tables_to_get:
                 print(ref_row["id"], ref_row["slug"])
 
                 api_endpoint = table_schema["api_endpoint"].format(rel_id=ref_row["id"])
-                url = f"{api_server}/{api_endpoint}"
+                url = f"{API_SERVER}/{api_endpoint}"
 
                 call_and_write(table, table_schema, column_names, url)
 
