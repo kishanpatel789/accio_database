@@ -90,6 +90,37 @@ class Character(Base):
     image = mapped_column(String)
     wiki = mapped_column(String)
 
+    alias_names = relationship(
+        "CharacterAliasNames",
+        lazy="joined",
+        cascade="all, delete-orphan",
+    )
+    family_members = relationship(
+        "CharacterFamilyMembers",
+        lazy="joined",
+        cascade="all, delete-orphan",
+    )
+    jobs = relationship(
+        "CharacterJobs",
+        lazy="joined",
+        cascade="all, delete-orphan",
+    )
+    romances = relationship(
+        "CharacterRomances",
+        lazy="joined",
+        cascade="all, delete-orphan",
+    )
+    titles = relationship(
+        "CharacterTitles",
+        lazy="joined",
+        cascade="all, delete-orphan",
+    )
+    wands = relationship(
+        "CharacterWands",
+        lazy="joined",
+        cascade="all, delete-orphan",
+    )
+
     def __repr__(self):
         return f"<Character(id='{self.id}', slug='{self.slug}')>"
 
@@ -100,12 +131,18 @@ class CharacterAliasNames(Base):
     character_id = mapped_column(ForeignKey("character.id"), primary_key=True)
     alias_names = mapped_column(String, primary_key=True)
 
+    def __repr__(self):
+        return f"<CharacterAliasNames(character_id='{self.character_id}', alias_names='{self.alias_names}')>"
+
 
 class CharacterFamilyMembers(Base):
     __tablename__ = "character_family_members"
 
     character_id = mapped_column(ForeignKey("character.id"), primary_key=True)
     family_members = mapped_column(String, primary_key=True)
+
+    def __repr__(self):
+        return f"<CharacterFamilyMembers(character_id='{self.character_id}', family_members='{self.family_members}')>"
 
 
 class CharacterJobs(Base):
@@ -114,12 +151,20 @@ class CharacterJobs(Base):
     character_id = mapped_column(ForeignKey("character.id"), primary_key=True)
     jobs = mapped_column(String, primary_key=True)
 
+    def __repr__(self):
+        return (
+            f"<CharacterJobs(character_id='{self.character_id}', jobs='{self.jobs}')>"
+        )
+
 
 class CharacterRomances(Base):
     __tablename__ = "character_romances"
 
     character_id = mapped_column(ForeignKey("character.id"), primary_key=True)
     romances = mapped_column(String, primary_key=True)
+
+    def __repr__(self):
+        return f"<CharacterRomances(character_id='{self.character_id}', romances='{self.romances}')>"
 
 
 class CharacterTitles(Base):
@@ -128,12 +173,18 @@ class CharacterTitles(Base):
     character_id = mapped_column(ForeignKey("character.id"), primary_key=True)
     titles = mapped_column(String, primary_key=True)
 
+    def __repr__(self):
+        return f"<CharacterTitles(character_id='{self.character_id}', titles='{self.titles}')>"
+
 
 class CharacterWands(Base):
     __tablename__ = "character_wands"
 
     character_id = mapped_column(ForeignKey("character.id"), primary_key=True)
     wands = mapped_column(String, primary_key=True)
+
+    def __repr__(self):
+        return f"<CharacterWands(character_id='{self.character_id}', wands='{self.wands}')>"
 
 
 class Movie(Base):
@@ -152,6 +203,42 @@ class Movie(Base):
     poster = mapped_column(String)
     wiki = mapped_column(String)
 
+    directors = relationship(
+        "MovieDirectors",
+        lazy="joined",
+        cascade="all, delete-orphan",
+    )
+    screenwriters = relationship(
+        "MovieScreenwriters",
+        lazy="joined",
+        cascade="all, delete-orphan",
+    )
+    producers = relationship(
+        "MovieProducers",
+        lazy="joined",
+        cascade="all, delete-orphan",
+    )
+    cinematographers = relationship(
+        "MovieCinematographers",
+        lazy="joined",
+        cascade="all, delete-orphan",
+    )
+    editors = relationship(
+        "MovieEditors",
+        lazy="joined",
+        cascade="all, delete-orphan",
+    )
+    distributors = relationship(
+        "MovieDistributors",
+        lazy="joined",
+        cascade="all, delete-orphan",
+    )
+    music_composers = relationship(
+        "MovieMusicComposers",
+        lazy="joined",
+        cascade="all, delete-orphan",
+    )
+
     def __repr__(self):
         return f"<Movie(id='{self.id}', slug='{self.slug}')>"
 
@@ -162,12 +249,18 @@ class MovieDirectors(Base):
     movie_id = mapped_column(ForeignKey("movie.id"), primary_key=True)
     directors = mapped_column(String, primary_key=True)
 
+    def __repr__(self):
+        return f"<MovieDirectors(movie_id='{self.movie_id}', directors='{self.directors}')>"
+
 
 class MovieScreenwriters(Base):
     __tablename__ = "movie_screenwriters"
 
     movie_id = mapped_column(ForeignKey("movie.id"), primary_key=True)
     screenwriters = mapped_column(String, primary_key=True)
+
+    def __repr__(self):
+        return f"<MovieScreenwriters(movie_id='{self.movie_id}', screenwriters='{self.screenwriters}')>"
 
 
 class MovieProducers(Base):
@@ -176,12 +269,18 @@ class MovieProducers(Base):
     movie_id = mapped_column(ForeignKey("movie.id"), primary_key=True)
     producers = mapped_column(String, primary_key=True)
 
+    def __repr__(self):
+        return f"<MovieProducers(movie_id='{self.movie_id}', producers='{self.producers}')>"
+
 
 class MovieCinematographers(Base):
     __tablename__ = "movie_cinematographers"
 
     movie_id = mapped_column(ForeignKey("movie.id"), primary_key=True)
     cinematographers = mapped_column(String, primary_key=True)
+
+    def __repr__(self):
+        return f"<MovieDirectors(movie_id='{self.movie_id}', cinematographers='{self.cinematographers}')>"
 
 
 class MovieEditors(Base):
@@ -190,6 +289,9 @@ class MovieEditors(Base):
     movie_id = mapped_column(ForeignKey("movie.id"), primary_key=True)
     editors = mapped_column(String, primary_key=True)
 
+    def __repr__(self):
+        return f"<MovieEditors(movie_id='{self.movie_id}', editors='{self.editors}')>"
+
 
 class MovieDistributors(Base):
     __tablename__ = "movie_distributors"
@@ -197,12 +299,18 @@ class MovieDistributors(Base):
     movie_id = mapped_column(ForeignKey("movie.id"), primary_key=True)
     distributors = mapped_column(String, primary_key=True)
 
+    def __repr__(self):
+        return f"<MovieDistributors(movie_id='{self.movie_id}', distributors='{self.distributors}')>"
+
 
 class MovieMusicComposers(Base):
     __tablename__ = "movie_music_composers"
 
     movie_id = mapped_column(ForeignKey("movie.id"), primary_key=True)
     music_composers = mapped_column(String, primary_key=True)
+
+    def __repr__(self):
+        return f"<MovieMusicComposers(movie_id='{self.movie_id}', music_composers='{self.music_composers}')>"
 
 
 class Potion(Base):

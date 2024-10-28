@@ -3,7 +3,6 @@ from sqlalchemy import select, create_engine
 from sqlalchemy.orm import sessionmaker
 from config import DB_PATH, CSV_DIR
 import models
-from seed_db import Session
 import pandas as pd
 
 # %%
@@ -15,20 +14,17 @@ Session = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 
 # %%
 query = select(
-        models.Book
-)
+        models.Movie
+).where(models.Movie.id == '678d2264-9c10-4eaa-9b9c-7f70fc331614').limit(20)
 print(str(query))
 
 # %%
 with Session() as db:
     results = db.execute(query).scalars().unique().all()
 
-
 # %%
-with Session() as db:
-    book_0 = results[0]
-    book_0.chapters
-
+results[0].distributors
+# %%
 # %%
 df_char = pd.read_csv(CSV_DIR/ 'character.csv')
 # %%
