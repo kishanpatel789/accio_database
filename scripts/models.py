@@ -84,3 +84,22 @@ class Potion(Base):
 
     def __repr__(self):
         return f"<Potion(id='{self.id}', slug='{self.slug}')>"
+
+
+class Spell(Base):
+    __tablename__ = "spell"
+
+    id = mapped_column(String, primary_key=True)
+    slug = mapped_column(String, unique=True, nullable=False)
+    name = mapped_column(String, nullable=False)
+    incantation = mapped_column(String)
+    category = mapped_column(String)
+    effect = mapped_column(String)
+    light = mapped_column(String)
+    hand = mapped_column(String)
+    creator = mapped_column(String)
+    image = mapped_column(String)
+    wiki = mapped_column(String)
+
+    def __repr__(self):
+        return f"<Spell(id='{self.id}', slug='{self.slug}')>"
