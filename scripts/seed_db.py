@@ -6,7 +6,7 @@ from datetime import datetime
 import hashlib
 
 
-from models import metadata_obj, Book, Chapter, Character, Potion, Spell
+from models import metadata_obj, Book, Chapter, Character, Movie, Potion, Spell
 from config import DB_PATH, CSV_DIR
 
 # %%
@@ -28,6 +28,12 @@ seed_map = [
         "cls": Character,
         "file": "character.csv",
         "dt_cols": [],
+    },
+    {
+        "name": "movie",
+        "cls": Movie,
+        "file": "movie.csv",
+        "dt_cols": ["release_date"],
     },
     {
         "name": "potion",

@@ -94,6 +94,26 @@ class Character(Base):
         return f"<Character(id='{self.id}', slug='{self.slug}')>"
 
 
+class Movie(Base):
+    __tablename__ = "movie"
+
+    id = mapped_column(String, primary_key=True)
+    slug = mapped_column(String, unique=True, nullable=False)
+    title = mapped_column(String, nullable=False)
+    summary = mapped_column(String)
+    release_date = mapped_column(DateTime)
+    running_time = mapped_column(String)
+    budget = mapped_column(String)
+    box_office = mapped_column(String)
+    rating = mapped_column(String)
+    trailer = mapped_column(String)
+    poster = mapped_column(String)
+    wiki = mapped_column(String)
+
+    def __repr__(self):
+        return f"<Movie(id='{self.id}', slug='{self.slug}')>"
+
+
 class Potion(Base):
     __tablename__ = "potion"
 
