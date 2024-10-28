@@ -12,5 +12,5 @@ CONTROL = {
 API_SERVER = "https://api.potterdb.com"
 PROJECT_DIR = Path(__file__).parents[1].resolve()
 CSV_DIR = PROJECT_DIR / "data/csv"
-DB_PATH = PROJECT_DIR / "potter.db"
+DB_PATH = PROJECT_DIR / "data/sqlite/potter.db"
 ERROR_FILE_PATH = PROJECT_DIR / "errors.txt"

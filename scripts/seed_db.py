@@ -61,6 +61,8 @@ with Session() as db:
     models.metadata_obj.create_all(bind=engine)
     initialize_error_file()
 
+    print(f"Seeding database: '{DB_PATH}'")
+
     # models
     for table_name, mapper in seed_map.items():
         print(f"\n============= {table_name} =============")
