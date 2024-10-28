@@ -4,149 +4,31 @@ from sqlalchemy.orm import sessionmaker
 import csv
 from datetime import datetime
 import hashlib
-
-
-from models import (
-    metadata_obj,
-    Book,
-    Chapter,
-    Character,
-    CharacterAliasNames,
-    CharacterFamilyMembers,
-    CharacterJobs,
-    CharacterRomances,
-    CharacterTitles,
-    CharacterWands,
-    Movie,
-    MovieDirectors,
-    MovieScreenwriters,
-    MovieProducers,
-    MovieCinematographers,
-    MovieEditors,
-    MovieDistributors,
-    MovieMusicComposers,
-    Potion,
-    Spell,
-)
-from config import DB_PATH, CSV_DIR
+import models
+from config import CSV_DIR, DB_PATH, ERROR_FILE_PATH
 
 # %%
-seed_map = [
-    {
-        "name": "book",
-        "cls": Book,
-        "file": "book.csv",
-        "dt_cols": ["release_date"],
-    },
-    {
-        "name": "chapter",
-        "cls": Chapter,
-        "file": "chapter.csv",
-        "dt_cols": [],
-    },
-    {
-        "name": "character",
-        "cls": Character,
-        "file": "character.csv",
-        "dt_cols": [],
-    },
-    {
-        "name": "character_alias_names",
-        "cls": CharacterAliasNames,
-        "file": "character_alias_names.csv",
-        "dt_cols": [],
-    },
-    {
-        "name": "character_family_members",
-        "cls": CharacterFamilyMembers,
-        "file": "character_family_members.csv",
-        "dt_cols": [],
-    },
-    {
-        "name": "character_jobs",
-        "cls": CharacterJobs,
-        "file": "character_jobs.csv",
-        "dt_cols": [],
-    },
-    {
-        "name": "character_romances",
-        "cls": CharacterRomances,
-        "file": "character_romances.csv",
-        "dt_cols": [],
-    },
-    {
-        "name": "character_titles",
-        "cls": CharacterTitles,
-        "file": "character_titles.csv",
-        "dt_cols": [],
-    },
-    {
-        "name": "character_wands",
-        "cls": CharacterWands,
-        "file": "character_wands.csv",
-        "dt_cols": [],
-    },
-    {
-        "name": "movie",
-        "cls": Movie,
-        "file": "movie.csv",
-        "dt_cols": ["release_date"],
-    },
-    {
-        "name": "movie_directors",
-        "cls": MovieDirectors,
-        "file": "movie_directors.csv",
-        "dt_cols": [],
-    },
-    {
-        "name": "movie_screenwriters",
-        "cls": MovieScreenwriters,
-        "file": "movie_screenwriters.csv",
-        "dt_cols": [],
-    },
-    {
-        "name": "movie_producers",
-        "cls": MovieProducers,
-        "file": "movie_producers.csv",
-        "dt_cols": [],
-    },
-    {
-        "name": "movie_cinematographers",
-        "cls": MovieCinematographers,
-        "file": "movie_cinematographers.csv",
-        "dt_cols": [],
-    },
-    {
-        "name": "movie_editors",
-        "cls": MovieEditors,
-        "file": "movie_editors.csv",
-        "dt_cols": [],
-    },
-    {
-        "name": "movie_distributors",
-        "cls": MovieDistributors,
-        "file": "movie_distributors.csv",
-        "dt_cols": [],
-    },
-    {
-        "name": "movie_music_composers",
-        "cls": MovieMusicComposers,
-        "file": "movie_music_composers.csv",
-        "dt_cols": [],
-    },
-    {
-        "name": "potion",
-        "cls": Potion,
-        "file": "potion.csv",
-        "dt_cols": [],
-    },
-    {
-        "name": "spell",
-        "cls": Spell,
-        "file": "spell.csv",
-        "dt_cols": [],
-    },
-]
+seed_map = {
+    "book": {"cls": models.Book, "dt_cols": ["release_date"]},
+    "chapter": {"cls": models.Chapter, "dt_cols": []},
+    "character": {"cls": models.Character, "dt_cols": []},
+    "character_alias_names": {"cls": models.CharacterAliasNames, "dt_cols": []},
+    "character_family_members": {"cls": models.CharacterFamilyMembers, "dt_cols": []},
+    "character_jobs": {"cls": models.CharacterJobs, "dt_cols": []},
+    "character_romances": {"cls": models.CharacterRomances, "dt_cols": []},
+    "character_titles": {"cls": models.CharacterTitles, "dt_cols": []},
+    "character_wands": {"cls": models.CharacterWands, "dt_cols": []},
+    "movie": {"cls": models.Movie, "dt_cols": ["release_date"]},
+    "movie_directors": {"cls": models.MovieDirectors, "dt_cols": []},
+    "movie_screenwriters": {"cls": models.MovieScreenwriters, "dt_cols": []},
+    "movie_producers": {"cls": models.MovieProducers, "dt_cols": []},
+    "movie_cinematographers": {"cls": models.MovieCinematographers, "dt_cols": []},
+    "movie_editors": {"cls": models.MovieEditors, "dt_cols": []},
+    "movie_distributors": {"cls": models.MovieDistributors, "dt_cols": []},
+    "movie_music_composers": {"cls": models.MovieMusicComposers, "dt_cols": []},
+    "potion": {"cls": models.Potion, "dt_cols": []},
+    "spell": {"cls": models.Spell, "dt_cols": []},
+}
 
 
 # %%
@@ -157,22 +39,36 @@ Session = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 
 
 # %%
-error_file_name = "errors.txt"
-with open(error_file_name, "wt") as f:
-    pass
+def initialize_error_file():
+    if not ERROR_FILE_PATH.exists():
+        ERROR_FILE_PATH.touch()
+    else:
+        with ERROR_FILE_PATH.open("w") as f:
+            f.truncate(0)
 
+
+def write_row_error(row):
+    with ERROR_FILE_PATH.open("a") as f:
+        print(
+            f"Duplicate record found in '{table_name}': {row}",
+            file=f,
+        )
+
+
+# %%
 with Session() as db:
-    metadata_obj.drop_all(bind=engine)
-    metadata_obj.create_all(bind=engine)
+    models.metadata_obj.drop_all(bind=engine)
+    models.metadata_obj.create_all(bind=engine)
+    initialize_error_file()
 
     # models
-    for mapper in seed_map:
-        print(f"\n============= {mapper["name"]} =============")
+    for table_name, mapper in seed_map.items():
+        print(f"\n============= {table_name} =============")
         mod_inst_items = []
         row_id_hashes = set()
         row_hashes = set()
 
-        with open(CSV_DIR / mapper["file"], newline="") as csvfile:
+        with open(CSV_DIR / f"{table_name}.csv", newline="") as csvfile:
             reader = csv.DictReader(csvfile)
             for row in reader:
                 # print(row)
@@ -181,22 +77,14 @@ with Session() as db:
                 if hasattr(mapper["cls"], "id"):
                     row_id_hash = hashlib.sha256(row["id"].encode()).hexdigest()
                     if row_id_hash in row_id_hashes:
-                        with open(error_file_name, "at") as f:
-                            print(
-                                f"Duplicate record found in '{mapper['name']}': {row}",
-                                file=f,
-                            )
+                        write_row_error(row)
                         continue
                     else:
                         row_id_hashes.add(row_id_hash)
                 else:
                     row_hash = hashlib.sha256(str(row).encode()).hexdigest()
                     if row_hash in row_hashes:
-                        with open(error_file_name, "at") as f:
-                            print(
-                                f"Duplicate record found in '{mapper['name']}': {row}",
-                                file=f,
-                            )
+                        write_row_error(row)
                         continue
                     else:
                         row_hashes.add(row_hash)
@@ -212,9 +100,7 @@ with Session() as db:
                 mod_inst_items.append(mod_inst)
 
         # persist orm objects in db
-        for mod_inst in mod_inst_items:
-            db.add(mod_inst)
-
+        db.add_all(mod_inst_items)
         db.commit()
 
         print(f"    Wrote {len(mod_inst_items):,} records to database")

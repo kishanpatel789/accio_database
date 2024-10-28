@@ -1,7 +1,5 @@
 # %%
 import requests
-import json
-from pathlib import Path
 import csv
 from schemas import schemas
 import time
