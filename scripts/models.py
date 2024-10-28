@@ -65,6 +65,35 @@ class Chapter(Base):
         )
 
 
+class Character(Base):
+    __tablename__ = "character"
+
+    id = mapped_column(String, primary_key=True)
+    slug = mapped_column(String, unique=True, nullable=False)
+    name = mapped_column(String, nullable=False)
+    born = mapped_column(String)
+    died = mapped_column(String)
+    gender = mapped_column(String)
+    species = mapped_column(String)
+    height = mapped_column(String)
+    weight = mapped_column(String)
+    hair_color = mapped_column(String)
+    eye_color = mapped_column(String)
+    skin_color = mapped_column(String)
+    blood_status = mapped_column(String)
+    marital_status = mapped_column(String)
+    nationality = mapped_column(String)
+    animagus = mapped_column(String)
+    boggart = mapped_column(String)
+    house = mapped_column(String)
+    patronus = mapped_column(String)
+    image = mapped_column(String)
+    wiki = mapped_column(String)
+
+    def __repr__(self):
+        return f"<Character(id='{self.id}', slug='{self.slug}')>"
+
+
 class Potion(Base):
     __tablename__ = "potion"
 
