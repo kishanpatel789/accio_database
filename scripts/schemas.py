@@ -18,9 +18,9 @@ schemas = {
         "id_ref": "book",
         "attributes": [
             "slug",
+            "title",
             "order",
             "summary",
-            "title",
         ],
     },
     "character": {

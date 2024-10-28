@@ -57,9 +57,30 @@ class Chapter(Base):
     slug = mapped_column(String, nullable=False)
     order = mapped_column(Integer)
     summary = mapped_column(String)
-    title = mapped_column(String)
+    title = mapped_column(String, nullable=False)
 
     def __repr__(self):
         return (
             f"<Chapter(id='{self.id}', book_id='{self.book_id}', slug='{self.slug}')>"
         )
+
+
+class Potion(Base):
+    __tablename__ = "potion"
+
+    id = mapped_column(String, primary_key=True)
+    slug = mapped_column(String, unique=True, nullable=False)
+    name = mapped_column(String, nullable=False)
+    effect = mapped_column(String)
+    side_effects = mapped_column(String)
+    characteristics = mapped_column(String)
+    time = mapped_column(String)
+    difficulty = mapped_column(String)
+    ingredients = mapped_column(String)
+    inventors = mapped_column(String)
+    manufacturers = mapped_column(String)
+    image = mapped_column(String)
+    wiki = mapped_column(String)
+
+    def __repr__(self):
+        return f"<Potion(id='{self.id}', slug='{self.slug}')>"
