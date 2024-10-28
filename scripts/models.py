@@ -94,6 +94,48 @@ class Character(Base):
         return f"<Character(id='{self.id}', slug='{self.slug}')>"
 
 
+class CharacterAliasNames(Base):
+    __tablename__ = "character_alias_names"
+
+    character_id = mapped_column(ForeignKey("character.id"), primary_key=True)
+    alias_names = mapped_column(String, primary_key=True)
+
+
+class CharacterFamilyMembers(Base):
+    __tablename__ = "character_family_members"
+
+    character_id = mapped_column(ForeignKey("character.id"), primary_key=True)
+    family_members = mapped_column(String, primary_key=True)
+
+
+class CharacterJobs(Base):
+    __tablename__ = "character_jobs"
+
+    character_id = mapped_column(ForeignKey("character.id"), primary_key=True)
+    jobs = mapped_column(String, primary_key=True)
+
+
+class CharacterRomances(Base):
+    __tablename__ = "character_romances"
+
+    character_id = mapped_column(ForeignKey("character.id"), primary_key=True)
+    romances = mapped_column(String, primary_key=True)
+
+
+class CharacterTitles(Base):
+    __tablename__ = "character_titles"
+
+    character_id = mapped_column(ForeignKey("character.id"), primary_key=True)
+    titles = mapped_column(String, primary_key=True)
+
+
+class CharacterWands(Base):
+    __tablename__ = "character_wands"
+
+    character_id = mapped_column(ForeignKey("character.id"), primary_key=True)
+    wands = mapped_column(String, primary_key=True)
+
+
 class Movie(Base):
     __tablename__ = "movie"
 
@@ -112,6 +154,55 @@ class Movie(Base):
 
     def __repr__(self):
         return f"<Movie(id='{self.id}', slug='{self.slug}')>"
+
+
+class MovieDirectors(Base):
+    __tablename__ = "movie_directors"
+
+    movie_id = mapped_column(ForeignKey("movie.id"), primary_key=True)
+    directors = mapped_column(String, primary_key=True)
+
+
+class MovieScreenwriters(Base):
+    __tablename__ = "movie_screenwriters"
+
+    movie_id = mapped_column(ForeignKey("movie.id"), primary_key=True)
+    screenwriters = mapped_column(String, primary_key=True)
+
+
+class MovieProducers(Base):
+    __tablename__ = "movie_producers"
+
+    movie_id = mapped_column(ForeignKey("movie.id"), primary_key=True)
+    producers = mapped_column(String, primary_key=True)
+
+
+class MovieCinematographers(Base):
+    __tablename__ = "movie_cinematographers"
+
+    movie_id = mapped_column(ForeignKey("movie.id"), primary_key=True)
+    cinematographers = mapped_column(String, primary_key=True)
+
+
+class MovieEditors(Base):
+    __tablename__ = "movie_editors"
+
+    movie_id = mapped_column(ForeignKey("movie.id"), primary_key=True)
+    editors = mapped_column(String, primary_key=True)
+
+
+class MovieDistributors(Base):
+    __tablename__ = "movie_distributors"
+
+    movie_id = mapped_column(ForeignKey("movie.id"), primary_key=True)
+    distributors = mapped_column(String, primary_key=True)
+
+
+class MovieMusicComposers(Base):
+    __tablename__ = "movie_music_composers"
+
+    movie_id = mapped_column(ForeignKey("movie.id"), primary_key=True)
+    music_composers = mapped_column(String, primary_key=True)
 
 
 class Potion(Base):
