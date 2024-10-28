@@ -4,7 +4,7 @@ from sqlalchemy.orm import sessionmaker
 import csv
 from datetime import datetime
 
-from models import metadata_obj, Book
+from models import metadata_obj, Book, Chapter
 from config import DB_PATH, CSV_DIR
 
 # %%
@@ -14,6 +14,13 @@ seed_map = [
         "cls": Book,
         "file": "book.csv",
         "dt_cols": ["release_date"],
+        "float_cols": [],
+    },
+    {
+        "name": "chapter",
+        "cls": Chapter,
+        "file": "chapter.csv",
+        "dt_cols": [],
         "float_cols": [],
     },
 ]

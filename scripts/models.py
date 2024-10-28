@@ -1,5 +1,15 @@
-from sqlalchemy import Column, String, Boolean, Float, \
-Integer, DateTime, Table, ForeignKey, func, MetaData
+from sqlalchemy import (
+    Column,
+    String,
+    Boolean,
+    Float,
+    Integer,
+    DateTime,
+    Table,
+    ForeignKey,
+    func,
+    MetaData,
+)
 from sqlalchemy.orm import mapped_column, relationship, DeclarativeBase
 from datetime import datetime, UTC
 
@@ -9,13 +19,15 @@ from sqlalchemy.types import DateTime
 
 metadata_obj = MetaData(schema=None)
 
+
 class Base(DeclarativeBase):
     metadata = metadata_obj
 
+
 class Book(Base):
     __tablename__ = "book"
-    id = mapped_column(String, primary_key=True)
 
+    id = mapped_column(String, primary_key=True)
     slug = mapped_column(String, unique=True, nullable=False)
     title = mapped_column(String, unique=True, nullable=False)
     summary = mapped_column(String)
@@ -26,3 +38,28 @@ class Book(Base):
     cover = mapped_column(String)
     wiki = mapped_column(String)
 
+    chapters = relationship(
+        "Chapter",
+        lazy="joined",
+        order_by="Chapter.order",
+        cascade="all, delete-orphan",
+    )
+
+    def __repr__(self):
+        return f"<Book(id='{self.id}', slug='{self.slug}')>"
+
+
+class Chapter(Base):
+    __tablename__ = "chapter"
+
+    id = mapped_column(String, primary_key=True)
+    book_id = mapped_column(ForeignKey("book.id"))
+    slug = mapped_column(String, nullable=False)
+    order = mapped_column(Integer)
+    summary = mapped_column(String)
+    title = mapped_column(String)
+
+    def __repr__(self):
+        return (
+            f"<Chapter(id='{self.id}', book_id='{self.book_id}', slug='{self.slug}')>"
+        )
