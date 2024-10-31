@@ -5,10 +5,26 @@ from schemas import schemas
 import time
 from collections import Counter
 from config import API_SERVER, CSV_DIR, CONTROL
+from typing import List, Dict, Any, Optional
 
 
 # %%
-def generate_column_names(table_schema: dict):
+def generate_column_names(table_schema: Dict[str, Any]) -> List[str]:
+    """
+    Translate a dictionary describing API endpoint into a list of column names.
+
+    Args:
+        table_schema (Dict[str, Any]): Dictionary representing the API endpoint and relevant attributes.
+
+    Returns:
+        List[str]: List of columns to represent the API scraped data as a relational table.
+    """
+
+    if not isinstance(table_schema, dict):
+        raise TypeError(
+            f"Input 'table_schema' must be a dictionary. Received type '{type(table_scheam)}'."
+        )
+
     column_names = ["id"]
     if table_schema.get("id_ref") is not None:
         column_names.append(table_schema["id_ref"] + "_id")
@@ -17,13 +33,41 @@ def generate_column_names(table_schema: dict):
     return column_names
 
 
-def generate_sub_column_names(table: str, array_attribute: str):
+def generate_sub_column_names(table: str, array_attribute: str) -> List[str]:
+    """
+    Generate column names to represented nested arrays from API output.
+
+    Args:
+        table (str): Name of base table.
+        array_attribute (str): Key of the nested array key-value pair in the API response.
+
+    Returns:
+        List[str]: List of columns to represent the sub-table populated with a nested array in the API response.
+    """
+
     sub_column_names = [f"{table}_id", array_attribute]
 
     return sub_column_names
 
 
-def make_api_get_request(url, payload=None, max_retries=5):
+def make_api_get_request(
+    url: str, payload: Optional[Dict[str, str]] = None, max_retries: int = 5
+) -> Dict[str, Any]:
+    """
+    Make a GET request to the RESTAPI endpoint and return the results. Exponential backoff is implemented to handle 429 errors.
+
+    Args:
+        url (str): URL of API endpoint
+        payload (Optional[Dict[str, str]], optional): A dictionary of key-values to be converted into the URL query component. Defaults to None.
+        max_retries (int, optional): The maximum number of request attempts when facing 429 errors. Defaults to 5.
+
+    Raises:
+        Exception: Raises exception when maximum retry attempts have been reached.
+
+    Returns:
+        Dict[str, Any]: A dictionary representing the JSON response from the API endpoint.
+    """
+
     retry_delay = 1  # 1 second
     for _ in range(max_retries):
         try:
@@ -33,7 +77,7 @@ def make_api_get_request(url, payload=None, max_retries=5):
             return response.json()
         except requests.exceptions.HTTPError:
             if response.status_code == 429:
-                print("Reached rate limit and received 429. Will try again...")
+                print("Reached rate limit and received 429 error. Will try again...")
                 time.sleep(retry_delay)
                 retry_delay *= 2  # double the delay for next attempt
             else:
@@ -41,7 +85,23 @@ def make_api_get_request(url, payload=None, max_retries=5):
     raise Exception("Maximum retry attempts reached. Try again in an hour.")
 
 
-def write_to_csv(response_json, table, table_schema, column_names):
+def write_to_csv(
+    response_json: Dict[str, Any],
+    table: str,
+    table_schema: Dict[str, Any],
+    column_names: List[str],
+) -> None:
+    """
+    Loop through records in API response and write to CSV file. For nested attributes identified in `table_schema`, also write a sub-file.
+
+    Args:
+        response_json (Dict[str, Any]): Dictionary representing response from API.
+        table (str): Name of table.
+        table_schema (Dict[str, Any]): Dictionary representing the API endpoint and relevant attributes.
+        column_names (List[str]): List of columns to represent the API scraped data as a relational table.
+    """
+
+    # initialize counter to track number of records written
     record_counter = Counter()
 
     # open csv file to append
@@ -88,7 +148,22 @@ def write_to_csv(response_json, table, table_schema, column_names):
             print(f"    Wrote {record_count:,} records to '{file_name}'")
 
 
-def call_and_write(table, table_schema, column_names, url=None):
+def call_and_write(
+    table: str,
+    table_schema: Dict[str, Any],
+    column_names: List[str],
+    url: Optional[str] = None,
+) -> None:
+    """
+    Call API endpoint and write output to CSV. Use API's pagination to make any follow-up API calls as needed.
+
+    Args:
+        table (str): Name of table.
+        table_schema (Dict[str, Any]): Dictionary representing the API endpoint and relevant attributes.
+        column_names (List[str]): List of columns to represent the API scraped data as a relational table.
+        url (Optional[str], optional): Initial URL of API endpoint. Defaults to None.
+    """
+
     # create base url
     if url is None:
         url = f"{API_SERVER}/{table_schema['api_endpoint']}"
@@ -107,49 +182,60 @@ def call_and_write(table, table_schema, column_names, url=None):
 
 
 # %%
-tables_to_get = [k for k, v in CONTROL.items() if v == 1]
+def main():
+    """
+    Loop through endpoint descriptions in `schemas.py`. For each endpoint, call the API and write output to CSV files.
+    """
 
-for table in tables_to_get:
-    print(f"\n============= {table} =============")
-    table_schema = schemas[table]
+    # identify endpoints to read into tables
+    tables_to_get = [k for k, v in CONTROL.items() if v == 1]
 
-    # identify final table columns
-    column_names = generate_column_names(table_schema)
+    for table in tables_to_get:
+        print(f"\n============= {table} =============")
+        table_schema = schemas[table]
 
-    # initialize base csv file
-    with open(CSV_DIR / f"{table}.csv", "wt", newline="") as f:
-        writer = csv.DictWriter(f, fieldnames=column_names, quoting=csv.QUOTE_ALL)
-        writer.writeheader()
+        # identify final table columns
+        column_names = generate_column_names(table_schema)
 
-    # initialize sub-attribute csv files
-    if table_schema.get("array_attributes") is not None:
-        for array_attribute in table_schema["array_attributes"]:
-            with open(
-                CSV_DIR / f"{table}_{array_attribute}.csv", "wt", newline=""
-            ) as f:
-                sub_column_names = generate_sub_column_names(table, array_attribute)
-                writer = csv.DictWriter(
-                    f, fieldnames=sub_column_names, quoting=csv.QUOTE_ALL
+        # initialize base csv file
+        with open(CSV_DIR / f"{table}.csv", "wt", newline="") as f:
+            writer = csv.DictWriter(f, fieldnames=column_names, quoting=csv.QUOTE_ALL)
+            writer.writeheader()
+
+        # initialize sub-attribute csv files
+        if table_schema.get("array_attributes") is not None:
+            for array_attribute in table_schema["array_attributes"]:
+                with open(
+                    CSV_DIR / f"{table}_{array_attribute}.csv", "wt", newline=""
+                ) as f:
+                    sub_column_names = generate_sub_column_names(table, array_attribute)
+                    writer = csv.DictWriter(
+                        f, fieldnames=sub_column_names, quoting=csv.QUOTE_ALL
+                    )
+                    writer.writeheader()
+
+        # for endpoints requiring reference IDs, generate custom API URL 
+        if table_schema.get("id_ref") is not None:
+            with open(CSV_DIR / f"{table_schema['id_ref']}.csv", "rt", newline="") as f:
+                reader_column_names = generate_column_names(
+                    schemas[f"{table_schema['id_ref']}"]
                 )
-                writer.writeheader()
+                reader = csv.DictReader(f, fieldnames=reader_column_names)
+                _ = next(reader)  # read header
 
-    if table_schema.get("id_ref") is not None:
-        with open(CSV_DIR / f"{table_schema['id_ref']}.csv", "rt", newline="") as f:
-            reader_column_names = generate_column_names(
-                schemas[f"{table_schema['id_ref']}"]
-            )
-            reader = csv.DictReader(f, fieldnames=reader_column_names)
-            _ = next(reader)  # read header
+                for ref_row in reader:
+                    print(f"Preparing for reference '{ref_row['slug']}'")
 
-            for ref_row in reader:
-                print(f"Preparing for reference '{ref_row['slug']}'")
+                    api_endpoint = table_schema["api_endpoint"].format(
+                        rel_id=ref_row["id"]
+                    )
+                    url = f"{API_SERVER}/{api_endpoint}"
 
-                api_endpoint = table_schema["api_endpoint"].format(rel_id=ref_row["id"])
-                url = f"{API_SERVER}/{api_endpoint}"
+                    call_and_write(table, table_schema, column_names, url)
+        else:
+            call_and_write(table, table_schema, column_names)
 
-                call_and_write(table, table_schema, column_names, url)
-
-    else:
-        call_and_write(table, table_schema, column_names)
 
 # %%
+if __name__ == "__main__":
+    main()
