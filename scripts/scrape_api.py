@@ -1,11 +1,13 @@
 # %%
-import requests
 import csv
-from schemas import schemas
 import time
 from collections import Counter
-from config import API_SERVER, CSV_DIR, CONTROL
 from typing import List, Dict, Any, Optional
+
+import requests
+
+from config import API_SERVER, CSV_DIR, CONTROL
+from schemas import schemas
 
 
 # %%
@@ -214,7 +216,7 @@ def main():
                     )
                     writer.writeheader()
 
-        # for endpoints requiring reference IDs, generate custom API URL 
+        # for endpoints requiring reference IDs, generate custom API URL
         if table_schema.get("id_ref") is not None:
             with open(CSV_DIR / f"{table_schema['id_ref']}.csv", "rt", newline="") as f:
                 reader_column_names = generate_column_names(
