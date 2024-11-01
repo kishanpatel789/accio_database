@@ -9,7 +9,7 @@ from sqlalchemy.orm import sessionmaker, Session
 from sqlalchemy.engine import Engine
 
 import models
-from config import CSV_DIR, DB_PATH, ERROR_FILE_PATH
+from config import CSV_DIR, SQLITE_DIR, DB_PATH, ERROR_FILE_PATH
 
 # %%
 # define map for seeding database
@@ -172,4 +172,9 @@ def main():
 
 # %%
 if __name__ == "__main__":
+    # create sqlite directory if needed
+    if not SQLITE_DIR.exists():
+        print(f"Creating directory: '{SQLITE_DIR}'.")
+        SQLITE_DIR.mkdir()
+
     main()

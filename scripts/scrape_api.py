@@ -240,4 +240,9 @@ def main():
 
 # %%
 if __name__ == "__main__":
+    # create csv directory if needed
+    if not CSV_DIR.exists():
+        print(f"Creating directory: '{CSV_DIR}'.")
+        CSV_DIR.mkdir(parents=True)
+
     main()
